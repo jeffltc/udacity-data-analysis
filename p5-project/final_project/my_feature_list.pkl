@@ -3,4 +3,8 @@ S'poi'
 p1
 aS'salary'
 p2
+aS'bonus'
+p3
+aS'total_payments'
+p4
 a.
