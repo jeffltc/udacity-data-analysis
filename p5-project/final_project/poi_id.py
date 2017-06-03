@@ -33,14 +33,44 @@ with open("final_project_dataset.pkl", "r") as data_file:
 ### Task 3: Create new feature(s)
 
 
-
 ### Store to my_dataset for easy export below.
 
 my_dataset = data_dict
 
+## feature engineer
+
+
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
+
+## use panda to remove the outlier
+
+def outlier_cleaner(data,percentage):
+    import pandas as pd
+    df = pd.DataFrame(data)
+    filt_df = df.loc[:, df.columns != 0]
+    quant_df = filt_df.quantile([percentage])
+    filt_df = filt_df.apply(lambda x: x[(x<quant_df.loc[percentage,x.name])], axis=0)
+    filt_df = filt_df = pd.concat([df.loc[:,0], filt_df], axis=1)
+    filt_df.dropna(inplace = True)
+    data = filt_df.as_matrix()
+    return data
+
+data = outlier_cleaner(data,0.95)
+
+
+'''
+## show data plot 
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = data[:,1]
+y = data[:,2]
+
+plt.scatter(x,y)
+plt.show()
+'''
 
 
 ## PCA
@@ -65,6 +95,14 @@ from sklearn.cross_validation import train_test_split
 features_train, features_test, labels_train, labels_test = \
     train_test_split(features, labels, test_size=0.5, random_state=42)
 
+'''
+## remove outlier with regression
+
+from sklearn.linear_model import LinearRegression
+regression = LinearRegression()
+regression = regression.fit(features_train,labels_train)
+'''
+
 ## import grid search cv to adjust kenel
 
 from sklearn.model_selection import GridSearchCV
@@ -72,13 +110,15 @@ from sklearn.model_selection import GridSearchCV
 ## GaussianNB
 from sklearn.naive_bayes import GaussianNB
 clf = GaussianNB()
-clf = grid_search.GridSearchCV()
+
 
 '''
 ## Decision Tree
 
 from sklearn.tree import DecisionTreeClassifier
 clf = DecisionTreeClassifier()
+parameters = {'max_depth':[1,10000]}
+clf = GridSearchCV(clf,parameters)
 '''
 
 '''
