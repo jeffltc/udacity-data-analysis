@@ -18,10 +18,10 @@ features_list = ['poi','salary','to_messages','deferral_payments',
                  'director_fees','deferred_income',
                  'long_term_incentive'] # You will need to use more features
                  
-test_size_parameter = 0.3
+test_size_parameter = 0.4
 components_parameter = 2
-outlier_parameter = 0.995
-selector_percentile_parameter = 30
+#outlier_parameter = 0.995
+selector_percentile_parameter = 40
 ## choose from "NB","Decision Tree","Random Forest","SVM"
 algorithm = "Random Forest"
 
@@ -51,14 +51,18 @@ my_dataset = data_dict
 ## feature engineer
 
 
+
+## delete TOTAL
+del my_dataset['TOTAL']
+
+
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
-print len(data)
 labels, features = targetFeatureSplit(data)
-print 
+
 
 ## use panda to remove the outlier
-
+'''
 def outlier_cleaner(data,percentage):
     import pandas as pd
     df = pd.DataFrame(data)
@@ -74,6 +78,7 @@ print len(data)
 data = outlier_cleaner(data,outlier_parameter)
 
 print len(data)
+'''
 
 '''
 ## show data plot 
@@ -146,10 +151,11 @@ def classifier(algorithm):
     elif algorithm == 'Random Forest':
         ## Random Forest
         from  sklearn.ensemble import RandomForestClassifier
-        clf = RandomForestClassifier(n_estimators=5)
-        parameters = {'n_estimators':[1,5]}
+        clf = RandomForestClassifier(n_estimators = 2)
+        '''
+        parameters = {'n_estimators':[1,2]}
         clf = GridSearchCV(clf,parameters)
-        
+        '''
     elif algorithm == 'SVM':
         from sklearn.svm import SVC
         clf = SVC()
@@ -160,11 +166,11 @@ def classifier(algorithm):
 clf = classifier(algorithm)
 clf = clf.fit(features_train,labels_train)
 
-
+'''
 ## test with different featrue selection
 clf = classifier('Decision Tree')
 clf = clf.fit(features_train,labels_train)
-
+'''
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
 ### using our testing script. Check the tester.py script in the final project
@@ -180,11 +186,11 @@ features_train, features_test, labels_train, labels_test = \
     train_test_split(features, labels, test_size=0.3, random_state=42)
 '''
 
-
+'''
 ## import precision score evaluation
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-'''
+
 print precision_score(clf.predict(selector.transform(features_test)),labels_test)
 print recall_score(clf.predict(selector.transform(features_test)),labels_test)
 
