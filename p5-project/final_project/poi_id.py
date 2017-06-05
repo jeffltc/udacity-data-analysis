@@ -151,7 +151,7 @@ def classifier(algorithm):
     elif algorithm == 'Random Forest':
         ## Random Forest
         from  sklearn.ensemble import RandomForestClassifier
-        clf = RandomForestClassifier(n_estimators = 2)
+        clf = RandomForestClassifier(n_estimators = 3)
         '''
         parameters = {'n_estimators':[1,2]}
         clf = GridSearchCV(clf,parameters)
