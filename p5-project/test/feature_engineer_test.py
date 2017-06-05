@@ -1,7 +1,17 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun  5 21:18:54 2017
+
+@author: newchama
+"""
+
 #!/usr/bin/python
 
 import sys
 import pickle
+
+sys.path.append("../final_project/")
 sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
@@ -24,26 +34,14 @@ components_parameter = 2
 selector_percentile_parameter = 20
 ## choose from "NB","Decision Tree","Random Forest","SVM"
 algorithm = "Decision Tree"
-'''
-## complete feature list
-complete_feature_list = []
-for element in data_dict['YEAP SOON']:
-    complete_feature_list.append(element)
-'''
+
 
 
 
 ### Load the dictionary containing the dataset
-with open("final_project_dataset.pkl", "r") as data_file:
+with open("../final_project/final_project_dataset.pkl", "r") as data_file:
     data_dict = pickle.load(data_file)
 
-### Task 2: Remove outliers
-
-
-### Task 3: Create new feature(s)
-
-
-### Store to my_dataset for easy export below.
 
 my_dataset = data_dict
 
@@ -70,11 +68,8 @@ selector.fit(features,labels)
 
 print "feature selected {}".format(len(selector.scores_))
 print "feature score {}".format(selector.scores_)
-print "features before fit {}".format(features)
 
 features_train = selector.transform(features)
-
-print "features after fit {}".format(features)
 
 
 ## PCA
@@ -89,48 +84,6 @@ features_train = pca.fit_transform(features)
 
 
 
-## use panda to remove the outlier
-'''
-def outlier_cleaner(data,percentage):
-    import pandas as pd
-    df = pd.DataFrame(data)
-    filt_df = df.loc[:, df.columns != 0]
-    quant_df = filt_df.quantile([percentage])
-    filt_df = filt_df.apply(lambda x: x[(x<quant_df.loc[percentage,x.name])], axis=0)
-    filt_df = filt_df = pd.concat([df.loc[:,0], filt_df], axis=1)
-    filt_df.dropna(inplace = True)
-    data = filt_df.as_matrix()
-    return data
-print len(data)
-
-data = outlier_cleaner(data,outlier_parameter)
-
-print len(data)
-'''
-
-'''
-## show data plot 
-import numpy as np
-import matplotlib.pyplot as plt
-
-x = data[:,1]
-y = data[:,2]
-
-plt.scatter(x,y)
-plt.show()
-'''
-
-### Extract features and labels from dataset for local testing
-labels, features = targetFeatureSplit(data)
-
-### Task 4: Try a varity of classifiers
-### Please name your classifier clf for easy export below.
-### Note that if you want to do PCA or other multi-stage operations,
-### you'll need to use Pipelines. For more info:
-### http://scikit-learn.org/stable/modules/pipeline.html
-
-# Provided to give you a starting point. Try a variety of classifiers.
-
 ## test case split
 from sklearn.cross_validation import train_test_split
 features_train, features_test, labels_train, labels_test = \
@@ -139,32 +92,6 @@ features_train, features_test, labels_train, labels_test = \
 print "feature length: {}".format(len(features_train))
 
 
-
-'''
-## feature selection
-from sklearn.feature_selection import SelectPercentile, f_classif
-selector = SelectPercentile(f_classif, percentile=selector_percentile_parameter)
-selector.fit(features_train,labels_train)
-features_train = selector.transform(features_train)
-
-## PCA
-
-from sklearn.decomposition import PCA
-pca = PCA(n_components=components_parameter)
-pca = pca.fit(features_train)
-features_train = pca.fit_transform(features_train)
-'''
-
-
-'''
-## remove outlier with regression
-
-from sklearn.linear_model import LinearRegression
-regression = LinearRegression()
-regression = regression.fit(features_train,labels_train)
-'''
-
-## import grid search cv to adjust kenel
 
 from sklearn.model_selection import GridSearchCV
 
@@ -208,26 +135,6 @@ print "feature length before fit: {}".format(len(features_train))
 ## train clf
 clf = classifier(algorithm)
 clf = clf.fit(features_train,labels_train)
-
-'''
-## test with different featrue selection
-clf = classifier('Decision Tree')
-clf = clf.fit(features_train,labels_train)
-'''
-
-### Task 5: Tune your classifier to achieve better than .3 precision and recall 
-### using our testing script. Check the tester.py script in the final project
-### folder for details on the evaluation method, especially the test_classifier
-### function. Because of the small size of the dataset, the script uses
-### stratified shuffle split cross validation. For more info: 
-### http://scikit-learn.org/stable/modules/generated/sklearn.cross_validation.StratifiedShuffleSplit.html
-
-'''
-# Example starting point. Try investigating other evaluation techniques!
-from sklearn.cross_validation import train_test_split
-features_train, features_test, labels_train, labels_test = \
-    train_test_split(features, labels, test_size=0.3, random_state=42)
-'''
 
 
 ## import precision score evaluation
