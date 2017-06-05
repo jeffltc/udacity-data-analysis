@@ -10,17 +10,28 @@ from tester import dump_classifier_and_data
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-features_list = ['poi','salary','bonus'] # You will need to use more features
 
+features_list = ['poi','salary','to_messages','deferral_payments',
+                 'total_payments','exercised_stock_options',
+                 'bonus','restricted_stock','shared_receipt_with_poi',        
+                 'restricted_stock_deferred','total_stock_value','expenses',
+                 'director_fees','deferred_income',
+                 'long_term_incentive'] # You will need to use more features
+                 
+test_size_parameter = 0.3
+components_parameter = 2
+outlier_parameter = 0.995
+selector_percentile_parameter = 30
+## choose from "NB","Decision Tree","Random Forest","SVM"
+algorithm = "Random Forest"
 
 '''
 ## complete feature list
 complete_feature_list = []
 for element in data_dict['YEAP SOON']:
-    if element != 'email_address' or 
     complete_feature_list.append(element)
-features_list = complete_feature_list
 '''
+
 
 
 ### Load the dictionary containing the dataset
@@ -42,7 +53,9 @@ my_dataset = data_dict
 
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
+print len(data)
 labels, features = targetFeatureSplit(data)
+print 
 
 ## use panda to remove the outlier
 
@@ -56,9 +69,11 @@ def outlier_cleaner(data,percentage):
     filt_df.dropna(inplace = True)
     data = filt_df.as_matrix()
     return data
+print len(data)
 
-data = outlier_cleaner(data,0.95)
+data = outlier_cleaner(data,outlier_parameter)
 
+print len(data)
 
 '''
 ## show data plot 
@@ -72,14 +87,8 @@ plt.scatter(x,y)
 plt.show()
 '''
 
-
-## PCA
-
-from sklearn.decomposition import PCA
-pca = PCA(n_components=2)
-pca = pca.fit(data)
-data = pca.fit_transform(data)
-
+### Extract features and labels from dataset for local testing
+labels, features = targetFeatureSplit(data)
 
 ### Task 4: Try a varity of classifiers
 ### Please name your classifier clf for easy export below.
@@ -89,11 +98,24 @@ data = pca.fit_transform(data)
 
 # Provided to give you a starting point. Try a variety of classifiers.
 
-
 ## test case split
 from sklearn.cross_validation import train_test_split
 features_train, features_test, labels_train, labels_test = \
-    train_test_split(features, labels, test_size=0.5, random_state=42)
+    train_test_split(features, labels, test_size=test_size_parameter, random_state=42)
+
+
+## feature selection
+from sklearn.feature_selection import SelectPercentile, f_classif
+selector = SelectPercentile(f_classif, percentile=selector_percentile_parameter)
+selector.fit(features_train,labels_train)
+features_train = selector.transform(features_train)
+
+## PCA
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components=components_parameter)
+pca = pca.fit(features_train)
+features_train = pca.fit_transform(features_train)
 
 '''
 ## remove outlier with regression
@@ -107,28 +129,40 @@ regression = regression.fit(features_train,labels_train)
 
 from sklearn.model_selection import GridSearchCV
 
-## GaussianNB
-from sklearn.naive_bayes import GaussianNB
-clf = GaussianNB()
 
+def classifier(algorithm):
+    if algorithm == 'NB':
+        ## GaussianNB
+        from sklearn.naive_bayes import GaussianNB
+        clf = GaussianNB()
+    elif algorithm == 'Decision Tree':
+        ## Decision Tree
+        from sklearn.tree import DecisionTreeClassifier
+        clf = DecisionTreeClassifier()
+        '''
+        parameters = {'max_depth':[1,10000]}
+        clf = GridSearchCV(clf,parameters)
+        '''
+    elif algorithm == 'Random Forest':
+        ## Random Forest
+        from  sklearn.ensemble import RandomForestClassifier
+        clf = RandomForestClassifier(n_estimators=5)
+        parameters = {'n_estimators':[1,5]}
+        clf = GridSearchCV(clf,parameters)
+        
+    elif algorithm == 'SVM':
+        from sklearn.svm import SVC
+        clf = SVC()
+    return clf
 
-'''
-## Decision Tree
-
-from sklearn.tree import DecisionTreeClassifier
-clf = DecisionTreeClassifier()
-parameters = {'max_depth':[1,10000]}
-clf = GridSearchCV(clf,parameters)
-'''
-
-'''
-## Random Forest
-from  sklearn.ensemble import RandomForestClassifier
-clf = RandomForestClassifier()
-
-'''
 
 ## train clf
+clf = classifier(algorithm)
+clf = clf.fit(features_train,labels_train)
+
+
+## test with different featrue selection
+clf = classifier('Decision Tree')
 clf = clf.fit(features_train,labels_train)
 
 
@@ -146,15 +180,15 @@ features_train, features_test, labels_train, labels_test = \
     train_test_split(features, labels, test_size=0.3, random_state=42)
 '''
 
-'''
+
 ## import precision score evaluation
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-
-print "precision score:" + str(precision_score(clf.predict(features_test),labels_test))
-print "recall score:" + str(recall_score(clf.predict(features_test),labels_test))
 '''
+print precision_score(clf.predict(selector.transform(features_test)),labels_test)
+print recall_score(clf.predict(selector.transform(features_test)),labels_test)
 
+'''
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
 ### that the version of poi_id.py that you submit can be run on its own and

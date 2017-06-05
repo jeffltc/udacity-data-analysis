@@ -23,6 +23,7 @@ with open("/Users/jeffzhang/GitHub/udacity-data-analysis/p5-project/final_projec
     data_dict = pickle.load(data_file)
 
 
+data = featureFormat(my_dataset, features_list, sort_keys = True)
 
 def outlier_cleaner(data,percentage):
     import pandas as pd
@@ -35,4 +36,6 @@ def outlier_cleaner(data,percentage):
     data = filt_df.as_matrix()
     return data
 
-data = outlier_cleaner(data,0.95)
+data = outlier_cleaner(data,0.97)
+
+print len(data)
