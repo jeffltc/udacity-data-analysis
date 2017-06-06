@@ -21,7 +21,7 @@ features_list = ['poi','salary','to_messages','deferral_payments',
 test_size_parameter = 0.4
 components_parameter = 2
 #outlier_parameter = 0.995
-selector_percentile_parameter = 20
+selector_percentile_parameter = 40
 ## choose from "NB","Decision Tree","Random Forest","SVM"
 algorithm = "Decision Tree"
 '''
@@ -64,27 +64,15 @@ labels, features = targetFeatureSplit(data)
 ## feature selection
 from sklearn.feature_selection import SelectPercentile, f_classif
 
-selector = SelectPercentile(f_classif, percentile = 50)
-
-selector.fit(features,labels)
-
-print "feature selected {}".format(len(selector.scores_))
-print "feature score {}".format(selector.scores_)
-print "features before fit {}".format(features)
-
-features_train = selector.transform(features)
-
-print "features after fit {}".format(features)
+selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
+features = selector.fit_transform(features,labels)
 
 
 ## PCA
 
 from sklearn.decomposition import PCA
 pca = PCA(n_components=components_parameter)
-pca = pca.fit(features)
-
-print "PCA {}".format(len(pca.components_))
-features_train = pca.fit_transform(features)
+features = pca.fit_transform(features,labels)
 
 
 
@@ -120,8 +108,7 @@ plt.scatter(x,y)
 plt.show()
 '''
 
-### Extract features and labels from dataset for local testing
-labels, features = targetFeatureSplit(data)
+
 
 ### Task 4: Try a varity of classifiers
 ### Please name your classifier clf for easy export below.
