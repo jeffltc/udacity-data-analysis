@@ -20,17 +20,10 @@ features_list = ['poi','salary','to_messages','deferral_payments',
                  
 test_size_parameter = 0.4
 components_parameter = 2
-#outlier_parameter = 0.995
 selector_percentile_parameter = 40
+
 ## choose from "NB","Decision Tree","Random Forest","SVM"
 algorithm = "Decision Tree"
-'''
-## complete feature list
-complete_feature_list = []
-for element in data_dict['YEAP SOON']:
-    complete_feature_list.append(element)
-'''
-
 
 
 ### Load the dictionary containing the dataset
@@ -61,18 +54,7 @@ labels, features = targetFeatureSplit(data)
 
 ## direct adjust data
 
-## feature selection
-from sklearn.feature_selection import SelectPercentile, f_classif
-
-selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
-features = selector.fit_transform(features,labels)
-
-
-## PCA
-
-from sklearn.decomposition import PCA
-pca = PCA(n_components=components_parameter)
-features = pca.fit_transform(features,labels)
+## feature scaling
 
 
 
@@ -118,38 +100,15 @@ plt.show()
 
 # Provided to give you a starting point. Try a variety of classifiers.
 
+'''
 ## test case split
 from sklearn.cross_validation import train_test_split
 features_train, features_test, labels_train, labels_test = \
     train_test_split(features, labels, test_size=test_size_parameter, random_state=42)
-
-print "feature length: {}".format(len(features_train))
-
-
-
-'''
-## feature selection
-from sklearn.feature_selection import SelectPercentile, f_classif
-selector = SelectPercentile(f_classif, percentile=selector_percentile_parameter)
-selector.fit(features_train,labels_train)
-features_train = selector.transform(features_train)
-
-## PCA
-
-from sklearn.decomposition import PCA
-pca = PCA(n_components=components_parameter)
-pca = pca.fit(features_train)
-features_train = pca.fit_transform(features_train)
 '''
 
 
-'''
-## remove outlier with regression
 
-from sklearn.linear_model import LinearRegression
-regression = LinearRegression()
-regression = regression.fit(features_train,labels_train)
-'''
 
 ## import grid search cv to adjust kenel
 
@@ -189,17 +148,45 @@ def classifier(algorithm):
         clf = SVC()
     return clf
 
-print "feature length before fit: {}".format(len(features_train))
-
 
 ## train clf
-clf = classifier(algorithm)
-clf = clf.fit(features_train,labels_train)
 
-'''
-## test with different featrue selection
-clf = classifier('Decision Tree')
-clf = clf.fit(features_train,labels_train)
+from sklearn.cross_validation import train_test_split
+features_train, features_test, labels_train, labels_test = \
+    train_test_split(features, labels, test_size=0.3, random_state=42)
+    
+def feature_scale(features):
+    from sklearn.preprocessing import MinMaxScaler
+    scaler = MinMaxScaler()
+    features = scaler.fit_transform(features)
+    return features
+
+## feature selection
+
+def feature_selection(features,labels):
+    from sklearn.feature_selection import SelectPercentile, f_classif
+    selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
+    features = selector.fit_transform(features,labels)
+    return features
+
+
+## PCA
+
+def feature_PCA(features,labels):
+    from sklearn.decomposition import PCA
+    pca = PCA(n_components=components_parameter)
+    features = pca.fit_transform(features,labels)
+    return features
+
+
+features_transformed = feature_scale(features_train)
+features_transformed = feature_selection(features_train,labels_train)
+features_transformed = feature_PCA(features_train,labels_train)
+
+    
+clf = classifier(algorithm)
+clf = clf.fit(features_transformed,labels_train)
+
 '''
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
@@ -211,23 +198,29 @@ clf = clf.fit(features_train,labels_train)
 
 '''
 # Example starting point. Try investigating other evaluation techniques!
-from sklearn.cross_validation import train_test_split
-features_train, features_test, labels_train, labels_test = \
-    train_test_split(features, labels, test_size=0.3, random_state=42)
-'''
+
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
 
 
-## import precision score evaluation
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
 
-'''
-print precision_score(clf.predict(pca.fit_transform(selector.transform(features_test))),labels_test)
-print recall_score(clf.predict(pca.fit_transform(selector.transform(features_test))),labels_test)
-'''
 
-print precision_score(clf.predict(features_test),labels_test)
-print recall_score(clf.predict(features_test),labels_test)
+def print_score(clf,features_test,labels_test):
+    ## import precision score evaluation
+    from sklearn.metrics import accuracy_score
+    from sklearn.metrics import precision_score
+    from sklearn.metrics import recall_score
+    
+    accuracy = accuracy_score(clf.predict(features_test),labels_test)
+    precision = precision_score(clf.predict(features_test),labels_test)
+    recall = recall_score(clf.predict(features_test),labels_test)
+    
+    print "accuracy score: {}".format(accuracy)
+    print "precision score: {}".format(precision)
+    print "recall score: {}".format(recall)
+
+
+print_score(clf,features_test,labels_test)
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
