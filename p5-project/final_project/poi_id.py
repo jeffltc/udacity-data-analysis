@@ -154,7 +154,9 @@ def classifier(algorithm):
 from sklearn.cross_validation import train_test_split
 features_train, features_test, labels_train, labels_test = \
     train_test_split(features, labels, test_size=0.3, random_state=42)
-    
+
+'''
+
 def feature_scale(features):
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
@@ -163,7 +165,7 @@ def feature_scale(features):
 
 ## feature selection
 
-def feature_selection(features,labels):
+def feature_selection(features,labels,selector_percentile_parameter):
     from sklearn.feature_selection import SelectPercentile, f_classif
     selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
     features = selector.fit_transform(features,labels)
@@ -172,7 +174,7 @@ def feature_selection(features,labels):
 
 ## PCA
 
-def feature_PCA(features,labels):
+def feature_PCA(features,labels,components_parameter):
     from sklearn.decomposition import PCA
     pca = PCA(n_components=components_parameter)
     features = pca.fit_transform(features,labels)
@@ -180,12 +182,16 @@ def feature_PCA(features,labels):
 
 
 features_transformed = feature_scale(features_train)
-features_transformed = feature_selection(features_train,labels_train)
-features_transformed = feature_PCA(features_train,labels_train)
+features_transformed = feature_selection(features_train,labels_train,selector_percentile_parameter)
+features_transformed = feature_PCA(features_train,labels_train,components_parameter)
 
     
 clf = classifier(algorithm)
 clf = clf.fit(features_transformed,labels_train)
+'''
+
+clf = classifier(algorithm)
+clf = clf.fit(features_train,labels_train)
 
 '''
 
@@ -221,6 +227,7 @@ def print_score(clf,features_test,labels_test):
 
 
 print_score(clf,features_test,labels_test)
+
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
