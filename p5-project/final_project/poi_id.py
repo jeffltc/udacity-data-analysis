@@ -205,9 +205,10 @@ clf = clf.fit(features_train,labels_train)
 '''
 # Example starting point. Try investigating other evaluation techniques!
 
+'''
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
-
+'''
 
 
 
