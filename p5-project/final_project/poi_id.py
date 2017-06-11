@@ -2,6 +2,7 @@
 
 import sys
 import pickle
+import pandas as pd
 sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
@@ -11,27 +12,38 @@ from tester import dump_classifier_and_data
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
 
-features_list = ['poi','salary','to_messages','deferral_payments',
-                 'total_payments','exercised_stock_options',
-                 'bonus','restricted_stock','shared_receipt_with_poi',        
-                 'restricted_stock_deferred','total_stock_value','expenses',
-                 'director_fees','deferred_income',
-                 'long_term_incentive'] # You will need to use more features
+features_list = ['poi',
+                 'salary',
+                 'bonus',
+                 'to_messages',
+                 'deferral_payments',
+                 'total_payments',
+                 'exercised_stock_options',
+                 'restricted_stock',
+                 'shared_receipt_with_poi',
+                 'restricted_stock_deferred',
+                 'total_stock_value',
+                 'expenses',
+                 'loan_advances',
+                 'director_fees',
+                 'deferred_income',
+                 'long_term_incentive',
+                 'from_poi_to_this_person',
+                 'from_this_person_to_poi'] # You will need to use more features
                  
 #test_size_parameter = 0.4
 
-components_parameter = 1
-selector_percentile_parameter = 10
+components_parameter = 2
+selector_percentile_parameter = 30
 
 GridSearch_test = False
-
 
 ## choose from 'KFold cross validation','StratifiedShuffleSplit'
 cv_parameter = 'StratifiedShuffleSplit'
 folds = 1000
 
 ## choose from "NB","Decision Tree","Random Forest","SVM"
-algorithm = "SVM"
+algorithm = "Decision Tree"
 
 
 ### Load the dictionary containing the dataset
@@ -50,15 +62,14 @@ my_dataset = data_dict
 
 ## feature engineer
 
-
-
 ## delete TOTAL
 del my_dataset['TOTAL']
-del my_dataset['LOCKHART EUGENE E']
 
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
+
+df = pd.DataFrame(data)
 
 
 ## direct adjust data
@@ -83,7 +94,6 @@ data = outlier_cleaner(data,outlier_parameter)
 
 print len(data)
 '''
-
 '''
 ## show data plot 
 import numpy as np
@@ -94,8 +104,8 @@ y = data[:,2]
 
 plt.scatter(x,y)
 plt.show()
-'''
 
+'''
 
 
 ### Task 4: Try a varity of classifiers
@@ -120,7 +130,7 @@ def classifier(algorithm, GridSearch_test = False):
     elif algorithm == 'Decision Tree':
         ## Decision Tree
         from sklearn.tree import DecisionTreeClassifier
-        clf = DecisionTreeClassifier(criterion = "gini",max_depth = 2,min_samples_leaf = 9)  
+        clf = DecisionTreeClassifier(criterion = "entropy",max_depth = 2,min_samples_leaf = 9)  
         if GridSearch_test:
             parameters = {'criterion':["entropy","gini"],'max_depth':(1,10,1),'min_samples_leaf':(1,200,10)}
             clf = GridSearchCV(clf,parameters)
@@ -269,11 +279,11 @@ for train_index,test_index in cv:
     labels_train = [labels[ii] for ii in train_index]
     labels_test = [labels[ii] for ii in test_index]
     # feature engineer the features
-    features_train = features_transform(features_train,labels_train)
+    #features_train = features_transform(features_train,labels_train)
     # train the classifier with engineered features
     clf.fit(features_train,labels_train)
     # transform test features
-    features_test = features_transform(features_test,labels_test)
+    #features_test = features_transform(features_test,labels_test)
     predictions = clf.predict(features_test)
     for prediction, truth in zip(predictions, labels_test):
         if prediction == 0 and truth == 0:
