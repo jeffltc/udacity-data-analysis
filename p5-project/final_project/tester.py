@@ -22,6 +22,37 @@ Recall: {:>0.{display_precision}f}\tF1: {:>0.{display_precision}f}\tF2: {:>0.{di
 RESULTS_FORMAT_STRING = "\tTotal predictions: {:4d}\tTrue positives: {:4d}\tFalse positives: {:4d}\
 \tFalse negatives: {:4d}\tTrue negatives: {:4d}"
 
+###Feature engineer
+components_parameter = 1
+selector_percentile_parameter = 10
+
+### feature scale
+def feature_scale(features):
+    from sklearn.preprocessing import MinMaxScaler
+    scaler = MinMaxScaler()
+    features = scaler.fit_transform(features)
+    return features
+
+### feature selection
+def feature_selection(features,labels,selector_percentile_parameter):
+    from sklearn.feature_selection import SelectPercentile, f_classif
+    selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
+    features = selector.fit_transform(features,labels)
+    return features
+
+### PCA
+def feature_PCA(features,labels,components_parameter):
+    from sklearn.decomposition import PCA
+    pca = PCA(n_components=components_parameter)
+    features = pca.fit_transform(features,labels)
+    return features
+
+def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
+    features = feature_scale(features)
+    features = feature_selection(features,labels,selector_percentile_parameter)
+    features = feature_PCA(features,labels,components_parameter)
+    return features
+                   
 def test_classifier(clf, dataset, feature_list, folds = 1000):
     data = featureFormat(dataset, feature_list, sort_keys = True)
     labels, features = targetFeatureSplit(data)
@@ -41,9 +72,12 @@ def test_classifier(clf, dataset, feature_list, folds = 1000):
         for jj in test_idx:
             features_test.append( features[jj] )
             labels_test.append( labels[jj] )
-        
+        ### feature engineer the features
+        features_train = features_transform(features_train,labels_train)
         ### fit the classifier using training set, and test on test set
         clf.fit(features_train, labels_train)
+        ### transform test features
+        features_test = features_transform(features_test,labels_test)
         predictions = clf.predict(features_test)
         for prediction, truth in zip(predictions, labels_test):
             if prediction == 0 and truth == 0:

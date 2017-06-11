@@ -20,17 +20,18 @@ features_list = ['poi','salary','to_messages','deferral_payments',
                  
 #test_size_parameter = 0.4
 
-components_parameter = 2
-selector_percentile_parameter = 15
+components_parameter = 1
+selector_percentile_parameter = 10
 
 GridSearch_test = False
+
 
 ## choose from 'KFold cross validation','StratifiedShuffleSplit'
 cv_parameter = 'StratifiedShuffleSplit'
 folds = 1000
 
 ## choose from "NB","Decision Tree","Random Forest","SVM"
-algorithm = "Decision Tree"
+algorithm = "SVM"
 
 
 ### Load the dictionary containing the dataset
@@ -119,10 +120,7 @@ def classifier(algorithm, GridSearch_test = False):
     elif algorithm == 'Decision Tree':
         ## Decision Tree
         from sklearn.tree import DecisionTreeClassifier
-        clf = DecisionTreeClassifier()
-        
-        ##best classifier
-        clf = DecisionTreeClassifier(criterion = "entropy",max_depth = 2,min_samples_leaf = 9)  
+        clf = DecisionTreeClassifier(criterion = "gini",max_depth = 2,min_samples_leaf = 9)  
         if GridSearch_test:
             parameters = {'criterion':["entropy","gini"],'max_depth':(1,10,1),'min_samples_leaf':(1,200,10)}
             clf = GridSearchCV(clf,parameters)
@@ -133,10 +131,13 @@ def classifier(algorithm, GridSearch_test = False):
         if GridSearch_test:
             parameters = {'n_estimators':[1,10]}
             clf = GridSearchCV(clf,parameters)
-        
     elif algorithm == 'SVM':
         from sklearn.svm import SVC
-        clf = SVC()
+        clf = SVC(C=1,gamma = 1)
+        if GridSearch_test:
+            parameters = {'C':[0.001, 0.01, 0.1, 1, 10],
+            "gamma":[0.001, 0.01, 0.1, 1]}
+            clf = GridSearchCV(clf, parameters)
     return clf
 
 clf = classifier(algorithm,GridSearch_test)
@@ -157,13 +158,16 @@ if GridSearch_test:
 
 ##Feature engineer
 
+
+## feature scale
+
 def feature_scale(features):
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
     features = scaler.fit_transform(features)
     return features
 
-## feature selection
+### feature selection
 
 def feature_selection(features,labels,selector_percentile_parameter):
     from sklearn.feature_selection import SelectPercentile, f_classif
@@ -171,7 +175,7 @@ def feature_selection(features,labels,selector_percentile_parameter):
     features = selector.fit_transform(features,labels)
     return features
 
-## PCA
+### PCA
 
 def feature_PCA(features,labels,components_parameter):
     from sklearn.decomposition import PCA
@@ -294,6 +298,8 @@ try:
     f1 = 2.0 * true_positives/(2*true_positives + false_positives+false_negatives)
     f2 = (1+2.0*2.0) * precision*recall/(4*precision + recall)
     print clf
+    print "\tcomponent:{}".format(components_parameter)
+    print "\tpercentile:{}".format(selector_percentile_parameter)
     print PERF_FORMAT_STRING.format(accuracy, precision, recall, f1, f2, display_precision = 5)
     print RESULTS_FORMAT_STRING.format(total_predictions, true_positives, false_positives, false_negatives, true_negatives)
 except:
