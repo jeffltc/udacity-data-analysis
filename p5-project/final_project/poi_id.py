@@ -20,10 +20,11 @@ features_list = ['poi','salary','to_messages','deferral_payments',
                  
 test_size_parameter = 0.4
 components_parameter = 2
-selector_percentile_parameter = 40
+selector_percentile_parameter = 60
+kfold_parameter = 2
 
 ## choose from "NB","Decision Tree","Random Forest","SVM"
-algorithm = "Decision Tree"
+algorithm = "NB"
 
 
 ### Load the dictionary containing the dataset
@@ -46,6 +47,7 @@ my_dataset = data_dict
 
 ## delete TOTAL
 del my_dataset['TOTAL']
+del my_dataset['LOCKHART EUGENE E']
 
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
@@ -100,15 +102,6 @@ plt.show()
 
 # Provided to give you a starting point. Try a variety of classifiers.
 
-'''
-## test case split
-from sklearn.cross_validation import train_test_split
-features_train, features_test, labels_train, labels_test = \
-    train_test_split(features, labels, test_size=test_size_parameter, random_state=42)
-'''
-
-
-
 
 ## import grid search cv to adjust kenel
 
@@ -153,9 +146,8 @@ def classifier(algorithm):
 
 from sklearn.cross_validation import train_test_split
 features_train, features_test, labels_train, labels_test = \
-    train_test_split(features, labels, test_size=0.3, random_state=42)
+    train_test_split(features, labels, test_size=test_size_parameter, random_state=42)
 
-'''
 
 def feature_scale(features):
     from sklearn.preprocessing import MinMaxScaler
@@ -171,7 +163,6 @@ def feature_selection(features,labels,selector_percentile_parameter):
     features = selector.fit_transform(features,labels)
     return features
 
-
 ## PCA
 
 def feature_PCA(features,labels,components_parameter):
@@ -180,19 +171,21 @@ def feature_PCA(features,labels,components_parameter):
     features = pca.fit_transform(features,labels)
     return features
 
+def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
+    features = feature_scale(features)
+    #features = feature_selection(features,labels,selector_percentile_parameter)
+    #features = feature_PCA(features,labels,components_parameter)
+    return features
 
-features_transformed = feature_scale(features_train)
-features_transformed = feature_selection(features_train,labels_train,selector_percentile_parameter)
-features_transformed = feature_PCA(features_train,labels_train,components_parameter)
+features_transformed =  features_transform(features_train,labels_train)
 
-    
+
 clf = classifier(algorithm)
 clf = clf.fit(features_transformed,labels_train)
-'''
 
+'''
 clf = classifier(algorithm)
 clf = clf.fit(features_train,labels_train)
-
 '''
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
@@ -206,28 +199,60 @@ clf = clf.fit(features_train,labels_train)
 # Example starting point. Try investigating other evaluation techniques!
 
 '''
-from sklearn.model_selection import KFold
-from sklearn.model_selection import cross_val_score
-'''
 
-
-
-def print_score(clf,features_test,labels_test):
+def calculate_score(clf,features,labels,print_score = False):
     ## import precision score evaluation
     from sklearn.metrics import accuracy_score
     from sklearn.metrics import precision_score
     from sklearn.metrics import recall_score
     
-    accuracy = accuracy_score(clf.predict(features_test),labels_test)
-    precision = precision_score(clf.predict(features_test),labels_test)
-    recall = recall_score(clf.predict(features_test),labels_test)
+    features_transformed = features_transform(features,labels)
     
-    print "accuracy score: {}".format(accuracy)
-    print "precision score: {}".format(precision)
-    print "recall score: {}".format(recall)
+    accuracy = accuracy_score(clf.predict(features_transformed),labels)
+    precision = precision_score(clf.predict(features_transformed),labels)
+    recall = recall_score(clf.predict(features_transformed),labels)
+    
+    if print_score:
+        print clf
+        print "accuracy score: {}".format(accuracy)
+        print "precision score: {}".format(precision)
+        print "recall score: {}".format(recall)
+    
+    scores = {"accuracy":accuracy,
+           "precision":precision,
+           "recall":recall
+            }
+    return scores
 
 
-print_score(clf,features_test,labels_test)
+from sklearn.model_selection import KFold
+
+kf = KFold(10)
+
+clf = classifier(algorithm)
+
+accuracy = []
+precision = []
+recall = []
+
+
+for train_index,test_index in kf.split(features):
+    features_train = [features[ii] for ii in train_index]
+    features_test = [features[ii] for ii in test_index]
+    labels_train = [labels[ii] for ii in train_index]
+    labels_test = [labels[ii] for ii in test_index]
+    features_train = features_transform(features_train,labels_train)
+    clf.fit(features_train,labels_train)
+    features_test = features_transform(features_test,labels_test)
+    scores = calculate_score(clf,features_test,labels_test,True)
+    accuracy.append(scores["accuracy"])
+    precision.append(scores["precision"])
+    recall.append(scores["recall"])
+
+print clf
+print "average accuracy:{}".format(sum(accuracy)/len(accuracy))
+print "average precision:{}".format(sum(precision)/len(precision))
+print "average recall:{}".format(sum(recall)/len(recall))
 
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
