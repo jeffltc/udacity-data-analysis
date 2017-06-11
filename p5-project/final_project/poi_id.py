@@ -20,11 +20,11 @@ features_list = ['poi','salary','to_messages','deferral_payments',
                  
 test_size_parameter = 0.4
 components_parameter = 2
-selector_percentile_parameter = 60
+selector_percentile_parameter = 40
 kfold_parameter = 2
 
 ## choose from "NB","Decision Tree","Random Forest","SVM"
-algorithm = "NB"
+algorithm = "Decision Tree"
 
 
 ### Load the dictionary containing the dataset
@@ -173,16 +173,16 @@ def feature_PCA(features,labels,components_parameter):
 
 def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
     features = feature_scale(features)
-    #features = feature_selection(features,labels,selector_percentile_parameter)
-    #features = feature_PCA(features,labels,components_parameter)
+    features = feature_selection(features,labels,selector_percentile_parameter)
+    features = feature_PCA(features,labels,components_parameter)
     return features
-
-features_transformed =  features_transform(features_train,labels_train)
+'''
+features_transformed = features_transform(features_train,labels_train)
 
 
 clf = classifier(algorithm)
 clf = clf.fit(features_transformed,labels_train)
-
+'''
 '''
 clf = classifier(algorithm)
 clf = clf.fit(features_train,labels_train)
@@ -206,11 +206,9 @@ def calculate_score(clf,features,labels,print_score = False):
     from sklearn.metrics import precision_score
     from sklearn.metrics import recall_score
     
-    features_transformed = features_transform(features,labels)
-    
-    accuracy = accuracy_score(clf.predict(features_transformed),labels)
-    precision = precision_score(clf.predict(features_transformed),labels)
-    recall = recall_score(clf.predict(features_transformed),labels)
+    accuracy = accuracy_score(clf.predict(features),labels)
+    precision = precision_score(clf.predict(features),labels)
+    recall = recall_score(clf.predict(features),labels)
     
     if print_score:
         print clf
@@ -244,7 +242,7 @@ for train_index,test_index in kf.split(features):
     features_train = features_transform(features_train,labels_train)
     clf.fit(features_train,labels_train)
     features_test = features_transform(features_test,labels_test)
-    scores = calculate_score(clf,features_test,labels_test,True)
+    scores = calculate_score(clf,features_test,labels_test)
     accuracy.append(scores["accuracy"])
     precision.append(scores["precision"])
     recall.append(scores["recall"])
