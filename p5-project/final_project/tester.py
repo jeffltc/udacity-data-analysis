@@ -53,7 +53,7 @@ def features_transform(features,labels,selector_percentile_parameter = selector_
     features = feature_PCA(features,labels,components_parameter)
     return features
                    
-def test_classifier(clf, dataset, feature_list, folds = 1000):
+def test_classifier(clf, dataset, feature_list,folds = 1000,transform = True):
     data = featureFormat(dataset, feature_list, sort_keys = True)
     labels, features = targetFeatureSplit(data)
     cv = StratifiedShuffleSplit(labels, folds, random_state = 42)
@@ -73,11 +73,13 @@ def test_classifier(clf, dataset, feature_list, folds = 1000):
             features_test.append( features[jj] )
             labels_test.append( labels[jj] )
         ### feature engineer the features
-        features_train = features_transform(features_train,labels_train)
+        if transform:
+            features_train = features_transform(features_train,labels_train)
         ### fit the classifier using training set, and test on test set
         clf.fit(features_train, labels_train)
         ### transform test features
-        features_test = features_transform(features_test,labels_test)
+        if transform:
+            features_test = features_transform(features_test,labels_test)
         predictions = clf.predict(features_test)
         for prediction, truth in zip(predictions, labels_test):
             if prediction == 0 and truth == 0:

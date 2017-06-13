@@ -2,11 +2,11 @@
 
 import sys
 import pickle
-import pandas as pd
 sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
 from tester import dump_classifier_and_data
+from tester import test_classifier
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
@@ -69,44 +69,11 @@ del my_dataset['TOTAL']
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 
-df = pd.DataFrame(data)
-
-
 ## direct adjust data
 
 ## feature scaling
 
 ## use panda to remove the outlier
-'''
-def outlier_cleaner(data,percentage):
-    import pandas as pd
-    df = pd.DataFrame(data)
-    filt_df = df.loc[:, df.columns != 0]
-    quant_df = filt_df.quantile([percentage])
-    filt_df = filt_df.apply(lambda x: x[(x<quant_df.loc[percentage,x.name])], axis=0)
-    filt_df = filt_df = pd.concat([df.loc[:,0], filt_df], axis=1)
-    filt_df.dropna(inplace = True)
-    data = filt_df.as_matrix()
-    return data
-print len(data)
-
-data = outlier_cleaner(data,outlier_parameter)
-
-print len(data)
-'''
-'''
-## show data plot 
-import numpy as np
-import matplotlib.pyplot as plt
-
-x = data[:,1]
-y = data[:,2]
-
-plt.scatter(x,y)
-plt.show()
-
-'''
-
 
 ### Task 4: Try a varity of classifiers
 ### Please name your classifier clf for easy export below.
@@ -150,7 +117,8 @@ def classifier(algorithm, GridSearch_test = False):
             clf = GridSearchCV(clf, parameters)
     return clf
 
-clf = classifier(algorithm,GridSearch_test)
+clf = classifier(algorithm,True)
+print clf.cv_results_
 
 
 ## test clf parameter
@@ -268,53 +236,7 @@ true_positives = 0
 false_positives = 0
 
 
-
-for train_index,test_index in cv:
-    features_train = []
-    features_test  = []
-    labels_train   = []
-    abels_test    = []
-    features_train = [features[ii] for ii in train_index]
-    features_test = [features[ii] for ii in test_index]
-    labels_train = [labels[ii] for ii in train_index]
-    labels_test = [labels[ii] for ii in test_index]
-    # feature engineer the features
-    #features_train = features_transform(features_train,labels_train)
-    # train the classifier with engineered features
-    clf.fit(features_train,labels_train)
-    # transform test features
-    #features_test = features_transform(features_test,labels_test)
-    predictions = clf.predict(features_test)
-    for prediction, truth in zip(predictions, labels_test):
-        if prediction == 0 and truth == 0:
-            true_negatives += 1
-        elif prediction == 0 and truth == 1:
-            false_negatives += 1
-        elif prediction == 1 and truth == 0:
-            false_positives += 1
-        elif prediction == 1 and truth == 1:
-            true_positives += 1
-        else:
-            print "Warning: Found a predicted label not == 0 or 1."
-            print "All predictions should take value 0 or 1."
-            print "Evaluating performance for processed predictions:"
-            break
-
-try:
-    total_predictions = true_negatives + false_negatives + false_positives + true_positives
-    accuracy = 1.0*(true_positives + true_negatives)/total_predictions
-    precision = 1.0*true_positives/(true_positives+false_positives)
-    recall = 1.0*true_positives/(true_positives+false_negatives)
-    f1 = 2.0 * true_positives/(2*true_positives + false_positives+false_negatives)
-    f2 = (1+2.0*2.0) * precision*recall/(4*precision + recall)
-    print clf
-    print "\tcomponent:{}".format(components_parameter)
-    print "\tpercentile:{}".format(selector_percentile_parameter)
-    print PERF_FORMAT_STRING.format(accuracy, precision, recall, f1, f2, display_precision = 5)
-    print RESULTS_FORMAT_STRING.format(total_predictions, true_positives, false_positives, false_negatives, true_negatives)
-except:
-        print "Got a divide by zero when trying out:", clf
-        print "Precision or recall may be undefined due to a lack of true positive predicitons."
+test_classifier(clf, my_dataset, features_list, transform = True)
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
