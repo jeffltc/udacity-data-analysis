@@ -5,8 +5,7 @@ import pickle
 sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
-from tester import dump_classifier_and_data
-from tester import test_classifier
+
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
@@ -118,8 +117,6 @@ def classifier(algorithm, GridSearch_test = False):
     return clf
 
 clf = classifier(algorithm,True)
-print clf.cv_results_
-
 
 ## test clf parameter
 if GridSearch_test:
@@ -129,9 +126,9 @@ if GridSearch_test:
         train_test_split(features, labels, test_size=test_size_parameter, random_state=42)
 
     features_train = features_transform(features_train,labels_train)
-
     clf = clf.fit(features_train,labels_train)
-    print clf.best_params_
+    
+    print clf.best_estimator_
 
 
 ##Feature engineer
@@ -176,33 +173,6 @@ def features_transform(features,labels,selector_percentile_parameter = selector_
 ### stratified shuffle split cross validation. For more info: 
 ### http://scikit-learn.org/stable/modules/generated/sklearn.cross_validation.StratifiedShuffleSplit.html
 
-'''
-# Example starting point. Try investigating other evaluation techniques!
-
-'''
-'''
-def calculate_score(clf,features,labels,print_score = False):
-    ## import precision score evaluation
-    from sklearn.metrics import accuracy_score
-    from sklearn.metrics import precision_score
-    from sklearn.metrics import recall_score
-    
-    accuracy = accuracy_score(clf.predict(features),labels)
-    precision = precision_score(clf.predict(features),labels)
-    recall = recall_score(clf.predict(features),labels)
-    
-    if print_score:
-        print clf
-        print "accuracy score: {}".format(accuracy)
-        print "precision score: {}".format(precision)
-        print "recall score: {}".format(recall)
-    
-    scores = {"accuracy":accuracy,
-           "precision":precision,
-           "recall":recall
-            }
-    return scores
-'''
 
 def cross_validation(cv_parameter,features,folds):
     if cv_parameter == 'KFold cross validation':
@@ -215,7 +185,6 @@ def cross_validation(cv_parameter,features,folds):
     return cv
 
 cv = cross_validation(cv_parameter,features,folds)
-
 
 
 ##validation
