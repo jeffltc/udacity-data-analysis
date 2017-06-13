@@ -23,10 +23,12 @@ RESULTS_FORMAT_STRING = "\tTotal predictions: {:4d}\tTrue positives: {:4d}\tFals
 \tFalse negatives: {:4d}\tTrue negatives: {:4d}"
 
 ###Feature engineer
+
 components_parameter = 1
-selector_percentile_parameter = 10
+selector_percentile_parameter = 15
 
 ### feature scale
+
 def feature_scale(features):
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
@@ -34,6 +36,7 @@ def feature_scale(features):
     return features
 
 ### feature selection
+
 def feature_selection(features,labels,selector_percentile_parameter):
     from sklearn.feature_selection import SelectPercentile, f_classif
     selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
@@ -41,11 +44,14 @@ def feature_selection(features,labels,selector_percentile_parameter):
     return features
 
 ### PCA
+
 def feature_PCA(features,labels,components_parameter):
     from sklearn.decomposition import PCA
     pca = PCA(n_components=components_parameter)
     features = pca.fit_transform(features,labels)
     return features
+
+### data transform
 
 def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
     features = feature_scale(features)

@@ -5,7 +5,8 @@ import pickle
 sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
-
+from tester import test_classifier
+from sklearn.model_selection import GridSearchCV
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
@@ -29,21 +30,14 @@ features_list = ['poi',
                  'long_term_incentive',
                  'from_poi_to_this_person',
                  'from_this_person_to_poi'] # You will need to use more features
-                 
-#test_size_parameter = 0.4
 
-components_parameter = 2
-selector_percentile_parameter = 30
 
+components_parameter = 1
+selector_percentile_parameter = 15
 GridSearch_test = False
 
-## choose from 'KFold cross validation','StratifiedShuffleSplit'
-cv_parameter = 'StratifiedShuffleSplit'
-folds = 1000
-
 ## choose from "NB","Decision Tree","Random Forest","SVM"
-algorithm = "Decision Tree"
-
+algorithm = "SVM"
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
@@ -59,8 +53,6 @@ with open("final_project_dataset.pkl", "r") as data_file:
 
 my_dataset = data_dict
 
-## feature engineer
-
 ## delete TOTAL
 del my_dataset['TOTAL']
 
@@ -68,11 +60,6 @@ del my_dataset['TOTAL']
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 
-## direct adjust data
-
-## feature scaling
-
-## use panda to remove the outlier
 
 ### Task 4: Try a varity of classifiers
 ### Please name your classifier clf for easy export below.
@@ -83,11 +70,7 @@ labels, features = targetFeatureSplit(data)
 # Provided to give you a starting point. Try a variety of classifiers.
 
 
-## import grid search cv to adjust kenel
-
-from sklearn.model_selection import GridSearchCV
-
-
+## prepare for the Algorithm
 def classifier(algorithm, GridSearch_test = False):
     if algorithm == 'NB':
         ## GaussianNB
@@ -116,7 +99,7 @@ def classifier(algorithm, GridSearch_test = False):
             clf = GridSearchCV(clf, parameters)
     return clf
 
-clf = classifier(algorithm,True)
+clf = classifier(algorithm,False)
 
 ## test clf parameter
 if GridSearch_test:
@@ -130,9 +113,7 @@ if GridSearch_test:
     
     print clf.best_estimator_
 
-
 ##Feature engineer
-
 
 ## feature scale
 
@@ -158,12 +139,13 @@ def feature_PCA(features,labels,components_parameter):
     features = pca.fit_transform(features,labels)
     return features
 
+### data transform
+
 def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
     features = feature_scale(features)
     features = feature_selection(features,labels,selector_percentile_parameter)
     features = feature_PCA(features,labels,components_parameter)
     return features
-
 
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
@@ -172,19 +154,6 @@ def features_transform(features,labels,selector_percentile_parameter = selector_
 ### function. Because of the small size of the dataset, the script uses
 ### stratified shuffle split cross validation. For more info: 
 ### http://scikit-learn.org/stable/modules/generated/sklearn.cross_validation.StratifiedShuffleSplit.html
-
-
-def cross_validation(cv_parameter,features,folds):
-    if cv_parameter == 'KFold cross validation':
-        from sklearn.model_selection import KFold
-        kf = KFold(folds)
-        cv = kf.split(features)
-    elif cv_parameter == 'StratifiedShuffleSplit':
-        from sklearn.cross_validation import StratifiedShuffleSplit
-        cv = StratifiedShuffleSplit(labels, folds, random_state = 42)
-    return cv
-
-cv = cross_validation(cv_parameter,features,folds)
 
 
 ##validation
@@ -204,8 +173,8 @@ false_negatives = 0
 true_positives = 0
 false_positives = 0
 
+test_classifier(clf, my_dataset, features_list)
 
-test_classifier(clf, my_dataset, features_list, transform = True)
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
