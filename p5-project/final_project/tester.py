@@ -15,6 +15,7 @@ import sys
 from sklearn.cross_validation import StratifiedShuffleSplit
 sys.path.append("../tools/")
 from feature_format import featureFormat, targetFeatureSplit
+import numpy as np
 
 PERF_FORMAT_STRING = "\
 \tAccuracy: {:>0.{display_precision}f}\tPrecision: {:>0.{display_precision}f}\t\
@@ -29,10 +30,23 @@ selector_percentile_parameter = 15
 
 ### feature scale
 
+def add_feature(features):
+    new_features = []
+    #print len(features[0])
+    for ele in features:
+        new_features.append(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
+        # Calculate the new feature with from 'to_messages', 'from_messages',
+        # and 'from_this_person_to_poi','from_poi_to_this_person'
+    #print len(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
+    print "add:{}".format(len(features[1]))
+    return new_features
+
 def feature_scale(features):
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
+    print "scale:{}".format(len(features[1]))
     features = scaler.fit_transform(features)
+    print "scale:{}".format(len(features[1]))
     return features
 
 ### feature selection
@@ -41,6 +55,7 @@ def feature_selection(features,labels,selector_percentile_parameter):
     from sklearn.feature_selection import SelectPercentile, f_classif
     selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
     features = selector.fit_transform(features,labels)
+    print "selection:{}".format(len(features[1]))
     return features
 
 ### PCA
@@ -53,7 +68,10 @@ def feature_PCA(features,labels,components_parameter):
 
 ### data transform
 
-def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
+def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter,add = False):
+    print add
+    if add:
+        features = add_feature(features)
     features = feature_scale(features)
     features = feature_selection(features,labels,selector_percentile_parameter)
     features = feature_PCA(features,labels,components_parameter)

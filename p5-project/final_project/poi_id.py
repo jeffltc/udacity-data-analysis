@@ -8,14 +8,17 @@ from feature_format import featureFormat, targetFeatureSplit
 from tester import test_classifier
 from tester import dump_classifier_and_data
 from sklearn.model_selection import GridSearchCV
+import numpy as np
 
-# feature list
+# Feature List
 
 features_list = ['poi',
+                 'to_messages',
+                 'from_messages',
+                 'from_this_person_to_poi',
+                 'from_poi_to_this_person',
                  'salary',
                  'bonus',
-                 'from_messages',
-                 'to_messages',
                  'deferral_payments',
                  'total_payments',
                  'exercised_stock_options',
@@ -28,15 +31,15 @@ features_list = ['poi',
                  'director_fees',
                  'deferred_income',
                  'long_term_incentive',
-                 'other',
-                 'from_poi_to_this_person',
-                 'from_this_person_to_poi']
+                 'other']
 
-# parameters
+# Parameters
 
 components_parameter = 1 # PCA components
 selector_percentile_parameter = 15 # SelectPercentile parameter
 GridSearch_test = False
+add_feature = True
+
 algorithm = "SVM" # choose from "NB","Decision Tree","Random Forest","SVM"
 
 ### Load the dictionary containing the dataset
@@ -57,7 +60,7 @@ data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 
 
-## prepare for the Algorithm
+## Prepare for the Algorithm
 def classifier(algorithm, GridSearch_test = False):
     if algorithm == 'NB':
         ## GaussianNB
@@ -88,22 +91,18 @@ def classifier(algorithm, GridSearch_test = False):
 
 clf = classifier(algorithm,False)
 
-## test clf parameter
-if GridSearch_test:
-    
-    from sklearn.cross_validation import train_test_split
-    features_train, features_test, labels_train, labels_test = \
-        train_test_split(features, labels, test_size=0.4, random_state=42)
+## Feature Engineer
 
-    features_train = features_transform(features_train,labels_train)
-    clf = clf.fit(features_train,labels_train)
-    
-    print clf.best_estimator_
-
-##Feature engineer
-
-## feature scale
-
+def add_feature(features):
+    new_features = []
+    print len(features[0])
+    for ele in features:
+        new_features.append(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
+        # Calculate the new feature with from 'to_messages', 'from_messages',
+        # and 'from_this_person_to_poi','from_poi_to_this_person'
+    print len(features[0])
+    return new_features
+        
 def feature_scale(features):
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
@@ -129,11 +128,30 @@ def feature_PCA(features,labels,components_parameter):
 
 ### data transform
 
-def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
+def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter,add_feature = False):
+    print add_feature
+    if add_feature:
+        features = add_feature(features)
     features = feature_scale(features)
     features = feature_selection(features,labels,selector_percentile_parameter)
     features = feature_PCA(features,labels,components_parameter)
     return features
+
+
+## Test Clf Parameter
+if GridSearch_test:
+    
+    from sklearn.cross_validation import train_test_split
+    features_train, features_test, labels_train, labels_test = \
+        train_test_split(features, labels, test_size=0.4, random_state=42)
+
+    features_train = features_transform(features_train,labels_train,add_feature = True)
+    
+    clf = clf.fit(features_train,labels_train)
+    
+    print clf.best_estimator_
+
+
 
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
