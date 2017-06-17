@@ -6,15 +6,15 @@ sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
 from tester import test_classifier
+from tester import dump_classifier_and_data
 from sklearn.model_selection import GridSearchCV
 
-### Task 1: Select what features you'll use.
-### features_list is a list of strings, each of which is a feature name.
-### The first feature must be "poi".
+# feature list
 
 features_list = ['poi',
                  'salary',
                  'bonus',
+                 'from_messages',
                  'to_messages',
                  'deferral_payments',
                  'total_payments',
@@ -28,46 +28,33 @@ features_list = ['poi',
                  'director_fees',
                  'deferred_income',
                  'long_term_incentive',
+                 'other',
                  'from_poi_to_this_person',
-                 'from_this_person_to_poi'] # You will need to use more features
+                 'from_this_person_to_poi']
 
+# parameters
 
-components_parameter = 1
-selector_percentile_parameter = 15
+components_parameter = 1 # PCA components
+selector_percentile_parameter = 15 # SelectPercentile parameter
 GridSearch_test = False
-
-## choose from "NB","Decision Tree","Random Forest","SVM"
-algorithm = "SVM"
+algorithm = "SVM" # choose from "NB","Decision Tree","Random Forest","SVM"
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
     data_dict = pickle.load(data_file)
-
-### Task 2: Remove outliers
-
-
-### Task 3: Create new feature(s)
-
 
 ### Store to my_dataset for easy export below.
 
 my_dataset = data_dict
 
 ## delete TOTAL
-del my_dataset['TOTAL']
+del_list = ['TOTAL','THE TRAVEL AGENCY IN THE PARK','LOCKHART EUGENE E']
+for key in del_list:
+    del my_dataset[key]
 
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
-
-
-### Task 4: Try a varity of classifiers
-### Please name your classifier clf for easy export below.
-### Note that if you want to do PCA or other multi-stage operations,
-### you'll need to use Pipelines. For more info:
-### http://scikit-learn.org/stable/modules/pipeline.html
-
-# Provided to give you a starting point. Try a variety of classifiers.
 
 
 ## prepare for the Algorithm
@@ -92,7 +79,7 @@ def classifier(algorithm, GridSearch_test = False):
             clf = GridSearchCV(clf,parameters)
     elif algorithm == 'SVM':
         from sklearn.svm import SVC
-        clf = SVC(C=1,gamma = 1)
+        clf = SVC(kernel = 'rbf',C=1,gamma = 1)
         if GridSearch_test:
             parameters = {'C':[0.001, 0.01, 0.1, 1, 10],
             "gamma":[0.001, 0.01, 0.1, 1]}
@@ -106,7 +93,7 @@ if GridSearch_test:
     
     from sklearn.cross_validation import train_test_split
     features_train, features_test, labels_train, labels_test = \
-        train_test_split(features, labels, test_size=test_size_parameter, random_state=42)
+        train_test_split(features, labels, test_size=0.4, random_state=42)
 
     features_train = features_transform(features_train,labels_train)
     clf = clf.fit(features_train,labels_train)
@@ -127,7 +114,8 @@ def feature_scale(features):
 
 def feature_selection(features,labels,selector_percentile_parameter):
     from sklearn.feature_selection import SelectPercentile, f_classif
-    selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
+    selector = SelectPercentile(f_classif, percentile = \
+                                selector_percentile_parameter)
     features = selector.fit_transform(features,labels)
     return features
 
