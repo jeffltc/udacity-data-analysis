@@ -95,12 +95,13 @@ clf = classifier(algorithm,False)
 
 def add_feature(features):
     new_features = []
-    print len(features[0])
     for ele in features:
-        new_features.append(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
-        # Calculate the new feature with from 'to_messages', 'from_messages',
-        # and 'from_this_person_to_poi','from_poi_to_this_person'
-    print len(features[0])
+        if ele[1]!= 0 and ele[0] !=0:
+            new_feature = ((ele[3]+ele[2])/(ele[1]+ele[0]))
+        else:
+            new_feature = 0
+        new_features.append(np.append(ele,new_feature))
+
     return new_features
         
 def feature_scale(features):
@@ -128,10 +129,12 @@ def feature_PCA(features,labels,components_parameter):
 
 ### data transform
 
-def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter,add_feature = False):
+def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter,add_feature = True):
     print add_feature
     if add_feature:
+        print len(features[1])
         features = add_feature(features)
+        print len(features[1])
     features = feature_scale(features)
     features = feature_selection(features,labels,selector_percentile_parameter)
     features = feature_PCA(features,labels,components_parameter)

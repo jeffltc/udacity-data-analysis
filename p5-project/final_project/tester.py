@@ -17,6 +17,7 @@ sys.path.append("../tools/")
 from feature_format import featureFormat, targetFeatureSplit
 import numpy as np
 
+score_list = []
 PERF_FORMAT_STRING = "\
 \tAccuracy: {:>0.{display_precision}f}\tPrecision: {:>0.{display_precision}f}\t\
 Recall: {:>0.{display_precision}f}\tF1: {:>0.{display_precision}f}\tF2: {:>0.{display_precision}f}"
@@ -27,26 +28,28 @@ RESULTS_FORMAT_STRING = "\tTotal predictions: {:4d}\tTrue positives: {:4d}\tFals
 
 components_parameter = 1
 selector_percentile_parameter = 15
+add = True
+
 
 ### feature scale
 
 def add_feature(features):
     new_features = []
-    #print len(features[0])
     for ele in features:
-        new_features.append(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
+        if ele[1]!= 0 and ele[0] !=0:
+            new_feature = ((ele[3]+ele[2])/(ele[1]+ele[0]))
+        else:
+            new_feature = 0
+        new_features.append(np.append(ele,new_feature))
         # Calculate the new feature with from 'to_messages', 'from_messages',
         # and 'from_this_person_to_poi','from_poi_to_this_person'
     #print len(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
-    print "add:{}".format(len(features[1]))
     return new_features
 
 def feature_scale(features):
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
-    print "scale:{}".format(len(features[1]))
     features = scaler.fit_transform(features)
-    print "scale:{}".format(len(features[1]))
     return features
 
 ### feature selection
@@ -55,7 +58,7 @@ def feature_selection(features,labels,selector_percentile_parameter):
     from sklearn.feature_selection import SelectPercentile, f_classif
     selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
     features = selector.fit_transform(features,labels)
-    print "selection:{}".format(len(features[1]))
+    score_list.append(selector.scores_)
     return features
 
 ### PCA
@@ -68,8 +71,7 @@ def feature_PCA(features,labels,components_parameter):
 
 ### data transform
 
-def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter,add = False):
-    print add
+def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
     if add:
         features = add_feature(features)
     features = feature_scale(features)
@@ -78,6 +80,7 @@ def features_transform(features,labels,selector_percentile_parameter = selector_
     return features
                    
 def test_classifier(clf, dataset, feature_list,folds = 1000,transform = True):
+    score_list = []
     data = featureFormat(dataset, feature_list, sort_keys = True)
     labels, features = targetFeatureSplit(data)
     cv = StratifiedShuffleSplit(labels, folds, random_state = 42)

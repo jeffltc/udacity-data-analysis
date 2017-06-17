@@ -56,11 +56,14 @@ print len(features[0])
 
 new_features = []
 for ele in features:
-    print ele
-    print len(ele)
-    new_features.append(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
-    print np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0])))
-    print len(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
+    if ele[1]!= 0 and ele[0] !=0:
+        new_feature = ((ele[3]+ele[2])/(ele[1]+ele[0]))
+    else:
+        new_feature = 0
+    new_features.append(np.append(ele,new_feature))
+
+#    print np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0])))
+#    print len(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
 
 clf = SVC(kernel = 'rbf',C=1,gamma = 1)
 
@@ -72,8 +75,11 @@ train_test_split(new_features, labels, test_size=0.4, random_state=42)
 
 
 from sklearn.feature_selection import SelectPercentile, f_classif
-selector = SelectPercentile(f_classif, percentile = 40)
+selector = SelectPercentile(f_classif, percentile = 15)
 
 selector = selector.fit(features_train,labels_train)
 
-print selector.scores_
+score_list = selector.scores_
+
+for score in score_list:
+    print score
