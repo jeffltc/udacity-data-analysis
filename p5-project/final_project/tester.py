@@ -72,17 +72,18 @@ def feature_PCA(features,labels,components_parameter):
 ### data transform
 
 def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
-    if add:
-        features = add_feature(features)
+    
     features = feature_scale(features)
     features = feature_selection(features,labels,selector_percentile_parameter)
     features = feature_PCA(features,labels,components_parameter)
     return features
                    
-def test_classifier(clf, dataset, feature_list,folds = 1000,transform = True):
+def test_classifier(clf, dataset, feature_list,folds = 1000,transform = True,add = True):
     score_list = []
     data = featureFormat(dataset, feature_list, sort_keys = True)
     labels, features = targetFeatureSplit(data)
+    if add:
+        features = add_feature(features)
     cv = StratifiedShuffleSplit(labels, folds, random_state = 42)
     true_negatives = 0
     false_negatives = 0
