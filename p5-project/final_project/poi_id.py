@@ -8,11 +8,42 @@ from feature_format import featureFormat, targetFeatureSplit
 from tester import test_classifier
 from tester import dump_classifier_and_data
 from sklearn.model_selection import GridSearchCV
+from sklearn.cross_validation import StratifiedShuffleSplit
 import numpy as np
+from sklearn.feature_selection import SelectPercentile, f_classif
 
-# Feature List
 
-features_list = ['poi',
+### Load the dictionary containing the dataset
+with open("final_project_dataset.pkl", "r") as data_file:
+    data_dict = pickle.load(data_file)
+    
+my_dataset = data_dict
+
+del_list = ['TOTAL','THE TRAVEL AGENCY IN THE PARK','LOCKHART EUGENE E']
+for key in del_list:
+    del my_dataset[key]
+    
+    
+### add new feature to dataset
+
+for element in my_dataset:
+    record = my_dataset[element]
+    to_messages = record['to_messages']
+    from_messages = record['from_messages']
+    from_this_person_to_poi = record['from_this_person_to_poi']
+    from_poi_to_this_person = record['from_poi_to_this_person']
+    if  to_messages == 0 or \
+    from_messages == 'NaN' or \
+    from_this_person_to_poi == 'NaN' or \
+    from_poi_to_this_person == 'NaN':
+        record['poi_email_rate'] = 'NaN'
+    else:
+        record['poi_email_rate'] = float(from_this_person_to_poi+from_poi_to_this_person)/(to_messages+from_messages)
+
+### feature_selection
+
+def feature_selection(percent,print_score = False):
+    features_list = ['poi',
                  'to_messages',
                  'from_messages',
                  'from_this_person_to_poi',
@@ -31,33 +62,44 @@ features_list = ['poi',
                  'director_fees',
                  'deferred_income',
                  'long_term_incentive',
-                 'other']
+                 'other',
+                 'poi_email_rate']
+    # split data
+    data = featureFormat(my_dataset, features_list, sort_keys = True)
+    labels, features = targetFeatureSplit(data)
+    # cross validation
+    score_list = []
+    cv = StratifiedShuffleSplit(labels, 1000, random_state = 42)
+    for train_idx, test_idx in cv: 
+        features_train = []
+        features_test  = []
+        labels_train   = []
+        labels_test    = []
+        for ii in train_idx:
+            features_train.append( features[ii] )
+            labels_train.append( labels[ii] )
+        for jj in test_idx:
+            features_test.append( features[jj] )
+            labels_test.append( labels[jj] )
+        selector = SelectPercentile()
+        selector = selector.fit(features_train,labels_train)
+        score_list.append(selector.scores_)
+    
+    score_average = sum(score_list)/len(score_list)
+    feature_score = zip(features_list[1:],score_average)
+    feature_score.sort(key = lambda tup:tup[1],reverse=True)
+    
+    # create new feature list
+    new_feature_list = ['poi']
+    feature_score = feature_score[:int(len(feature_score)*percent/100)]
+    for ele,_ in feature_score:
+        new_feature_list.append(ele)
+    if print_score == True:
+        print feature_score
+    return new_feature_list
 
-# Parameters
-
-components_parameter = 1 # PCA components
-selector_percentile_parameter = 15 # SelectPercentile parameter
-GridSearch_test = False
-add_feature = True
-
-algorithm = "SVM" # choose from "NB","Decision Tree","Random Forest","SVM"
-
-### Load the dictionary containing the dataset
-with open("final_project_dataset.pkl", "r") as data_file:
-    data_dict = pickle.load(data_file)
-
-### Store to my_dataset for easy export below.
-
-my_dataset = data_dict
 
 ## delete TOTAL
-del_list = ['TOTAL','THE TRAVEL AGENCY IN THE PARK','LOCKHART EUGENE E']
-for key in del_list:
-    del my_dataset[key]
-
-### Extract features and labels from dataset for local testing
-data = featureFormat(my_dataset, features_list, sort_keys = True)
-labels, features = targetFeatureSplit(data)
 
 
 ## Prepare for the Algorithm
@@ -91,33 +133,14 @@ def classifier(algorithm, GridSearch_test = False):
 
 clf = classifier(algorithm,False)
 
-## Feature Engineer
+### feature scale
 
-def add_feature(features):
-    new_features = []
-    for ele in features:
-        if ele[1]!= 0 and ele[0] !=0:
-            new_feature = ((ele[3]+ele[2])/(ele[1]+ele[0]))
-        else:
-            new_feature = 0
-        new_features.append(np.append(ele,new_feature))
-
-    return new_features
-        
 def feature_scale(features):
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
     features = scaler.fit_transform(features)
     return features
 
-### feature selection
-
-def feature_selection(features,labels,selector_percentile_parameter):
-    from sklearn.feature_selection import SelectPercentile, f_classif
-    selector = SelectPercentile(f_classif, percentile = \
-                                selector_percentile_parameter)
-    features = selector.fit_transform(features,labels)
-    return features
 
 ### PCA
 
@@ -131,12 +154,7 @@ def feature_PCA(features,labels,components_parameter):
 
 def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter,add_feature = True):
     print add_feature
-    if add_feature:
-        print len(features[1])
-        features = add_feature(features)
-        print len(features[1])
     features = feature_scale(features)
-    features = feature_selection(features,labels,selector_percentile_parameter)
     features = feature_PCA(features,labels,components_parameter)
     return features
 
@@ -147,25 +165,12 @@ if GridSearch_test:
     from sklearn.cross_validation import train_test_split
     features_train, features_test, labels_train, labels_test = \
         train_test_split(features, labels, test_size=0.4, random_state=42)
-
     features_train = features_transform(features_train,labels_train,add_feature = True)
-    
     clf = clf.fit(features_train,labels_train)
-    
     print clf.best_estimator_
 
 
-
-
-### Task 5: Tune your classifier to achieve better than .3 precision and recall 
-### using our testing script. Check the tester.py script in the final project
-### folder for details on the evaluation method, especially the test_classifier
-### function. Because of the small size of the dataset, the script uses
-### stratified shuffle split cross validation. For more info: 
-### http://scikit-learn.org/stable/modules/generated/sklearn.cross_validation.StratifiedShuffleSplit.html
-
-
-##validation
+## Cross Validation
 
 PERF_FORMAT_STRING = "\
 \tAccuracy: {:>0.{display_precision}f}\tPrecision: {:>0.{display_precision}f}\t\
@@ -182,12 +187,17 @@ false_negatives = 0
 true_positives = 0
 false_positives = 0
 
+
+# Parameters
+components_parameter = 1 # PCA components
+percent = 5 # SelectPercentile parameter
+GridSearch_test = False
+
+algorithm = "SVM" # choose from "NB","Decision Tree","Random Forest","SVM"
+
+# Select Feature and Train Clf
+
+features_list = feature_selection(percent)
 test_classifier(clf, my_dataset, features_list)
-
-
-### Task 6: Dump your classifier, dataset, and features_list so anyone can
-### check your results. You do not need to change anything below, but make sure
-### that the version of poi_id.py that you submit can be run on its own and
-### generates the necessary .pkl files for validating your results.
 
 dump_classifier_and_data(clf, my_dataset, features_list)

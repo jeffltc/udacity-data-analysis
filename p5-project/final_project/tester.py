@@ -33,32 +33,11 @@ add = True
 
 ### feature scale
 
-def add_feature(features):
-    new_features = []
-    for ele in features:
-        if ele[1]!= 0 and ele[0] !=0:
-            new_feature = ((ele[3]+ele[2])/(ele[1]+ele[0]))
-        else:
-            new_feature = 0
-        new_features.append(np.append(ele,new_feature))
-        # Calculate the new feature with from 'to_messages', 'from_messages',
-        # and 'from_this_person_to_poi','from_poi_to_this_person'
-    #print len(np.append(ele,((ele[3]+ele[2])/(ele[1]+ele[0]))))
-    return new_features
 
 def feature_scale(features):
     from sklearn.preprocessing import MinMaxScaler
     scaler = MinMaxScaler()
     features = scaler.fit_transform(features)
-    return features
-
-### feature selection
-
-def feature_selection(features,labels,selector_percentile_parameter):
-    from sklearn.feature_selection import SelectPercentile, f_classif
-    selector = SelectPercentile(f_classif, percentile = selector_percentile_parameter)
-    features = selector.fit_transform(features,labels)
-    score_list.append(selector.scores_)
     return features
 
 ### PCA
@@ -74,7 +53,6 @@ def feature_PCA(features,labels,components_parameter):
 def features_transform(features,labels,selector_percentile_parameter = selector_percentile_parameter,components_parameter = components_parameter):
     
     features = feature_scale(features)
-    features = feature_selection(features,labels,selector_percentile_parameter)
     features = feature_PCA(features,labels,components_parameter)
     return features
                    
@@ -82,8 +60,6 @@ def test_classifier(clf, dataset, feature_list,folds = 1000,transform = True,add
     score_list = []
     data = featureFormat(dataset, feature_list, sort_keys = True)
     labels, features = targetFeatureSplit(data)
-    if add:
-        features = add_feature(features)
     cv = StratifiedShuffleSplit(labels, folds, random_state = 42)
     true_negatives = 0
     false_negatives = 0
