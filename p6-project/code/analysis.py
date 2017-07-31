@@ -1,0 +1,16 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jul 25 21:53:41 2017
+
+@author: newchama
+"""
+
+import pandas as pd
+import os 
+
+df = pd.read_csv('../input/titanic_data.csv')
+
+#不同性别的生存率
+
+print df.groupby('Sex')['Survived'].mean()

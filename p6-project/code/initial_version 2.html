@@ -1,0 +1,37 @@
+<html>
+
+   <head>
+      <script src="lib/require.js">
+        alert('test')
+        require.config({
+          paths:{
+            "sql":"lib/sql.js"
+          }
+        });
+      </script>
+      <script type="text/javascript">
+         <!--
+            function load_sql() {
+              require
+              var sql = require(['sql.js']);
+              var db = new sql.Database();
+              // NOTE: You can also use new sql.Database(data) where
+              // data is an Uint8Array representing an SQLite database file
+
+              // Execute some sql
+              sqlstr = "CREATE TABLE hello (a int, b char);";
+              sqlstr += "INSERT INTO hello VALUES (0, 'hello');"
+              sqlstr += "INSERT INTO hello VALUES (1, 'world');"
+              db.run(sqlstr); // Run the query without returning anything
+
+            }
+         //-->
+      </script>
+      
+   </head>
+   
+   <body>
+      <input type="button" onclick="load_sql()" value="load sql" />
+   </body>
+   
+</html>
