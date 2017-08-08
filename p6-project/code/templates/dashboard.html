@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+</head>
+<nav>
+  <a href="/" align = "right">Storyboard</a>
+</nav>
+<body>
+<h1 align= "center">If you were on the Titanic...</h1>
+<p align = "center">Please input your gender, age information and choose the class you could afford.</p>
+<div id = "filterGroup" class = "row" align = 'center' style="margin: 0 auto; width:455px;">
+  <div class ="right" >
+    <div class="btn-group" data-toggle="Male" align = "left">
+      <label class="btn btn-primary active">
+        <input type="radio" name="sex-options" id="option1" autocomplete="off" value =  'male' checked> Male
+      </label>
+      <label class="btn btn-primary">
+        <input type="radio" name="sex-options" id="option2" autocomplete="off" value = 'female' > Female
+      </label>
+    </div>
+    <div class="btn-group" data-toggle="buttons" align = "left">
+      <label class="btn btn-primary active">
+        <input type="radio" name="age-options" id="option1" autocomplete="off" value =  0,10 checked> 0-10
+      </label>
+      <label class="btn btn-primary">
+        <input type="radio" name="age-options" id="option2" autocomplete="off" value =  10,30 > 10-30
+      </label>
+      <label class="btn btn-primary">
+        <input type="radio" name="age-options" id="option3" autocomplete="off" value =  30,50 > 30-50
+      </label>
+        <input type="radio" name="age-options" id="option4" autocomplete="off" value =  50,60 > 50-60
+      </label>
+        <input type="radio" name="age-options" id="option5" autocomplete="off" value =  60,80 > 60-80
+      </label>
+    </div>
+    <div class="btn-group" data-toggle="buttons" align = "left">
+      <label class="btn btn-primary active">
+        <input type="radio" name="pclass-options" id="option1" autocomplete="off" checked value = 1> Class 1
+      </label>
+      <label class="btn btn-primary">
+        <input type="radio" name="pclass-options" id="option2" autocomplete="off" value = 2> Class 2
+      </label>
+      <label class="btn btn-primary">
+        <input type="radio" name="pclass-options" id="option3" autocomplete="off" value = 3> Class 3
+      </label>
+    </div>
+  </div>
+  <button align = 'center' type="button"  onclick = update_chart() >Calculate your survive rate</button>
+</div>
+<div id="chartContainer" align = 'center'>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="http://dimplejs.org/dist/dimple.v2.3.0.min.js"></script>
+  <script type="text/javascript">
+
+      
+    var svg = dimple.newSvg("#chartContainer", 590, 400); // initialize svg
+  
+  
+      
+    function update_query_url_according_to_buttons(){ // update the params according to the radio button values
+      var promise_params = new Promise(function(resolve,reject){
+      var pclass = document.querySelector('input[name = "pclass-options"]:checked').value;
+      var sex = document.querySelector('input[name = "sex-options"]:checked').value;
+      var min_age = document.querySelector('input[name = "age-options"]:checked').value.split(",")[0];
+      var max_age = document.querySelector('input[name = "age-options"]:checked').value.split(",")[1];
+      var tags = "pclass="+pclass+"&sex="+sex+"&min_age="+min_age+"&max_age="+max_age;
+      var api_url = "http://jeffltc.leanapp.cn/survive?";
+      var url = api_url + tags;
+      if (url){
+        resolve(url);
+      }else{
+        reject(error);
+      }
+    });
+     return promise_params
+      }
+
+    function query(url){ //call api to get data
+      return fetch(url)
+    }
+      
+    function draw(data) { // draw chart with data
+      var myChart = new dimple.chart(svg, data);
+      myChart.setBounds(20, 20, 460, 360)
+      myChart.addMeasureAxis("p", "Count");
+      myChart.addSeries("Survive", dimple.plot.pie);
+      var myLegend = myChart.addLegend(500, 20, 90, 300, "left");
+      myChart.draw();
+    };
+
+    function generate_chart(){ //use chain function to draw default chart
+    update_query_url_according_to_buttons()
+    .then(function(url){query(url)
+    .then(function(data){data.json()
+    .then(function(data){draw(data)})})})
+  };
+
+    function update_chart(){ //use chain function to update chart
+    svg.selectAll("*").remove()
+    update_query_url_according_to_buttons()
+    .then(function(url){query(url)
+    .then(function(data){data.json()
+    .then(function(data){draw(data)})})})
+  };
+
+    generate_chart() //generate default chart
+
+  </script>
+  </body>
+</div>
+</html>

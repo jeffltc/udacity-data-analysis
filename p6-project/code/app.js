@@ -1,1 +1,0 @@
-var sql = require('sql.js')

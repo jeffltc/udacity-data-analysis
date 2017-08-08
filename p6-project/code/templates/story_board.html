@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+</head>
+<body>
+<nav>
+  <a href="/dashboard" align = "right">Dashboard</a>
+</nav>
+<h1 align= "center">Titanic Survive Chance Analysis</h1>
+<div id = "filterGroup" align = 'center'>
+<button onclick = update_chart("sex")>Gender Analysis</button>
+<button onclick = update_chart("age")>Age Group Analysis</button>
+<button onclick = update_chart("pclass")>Class Analysis</button>
+<button onclick = update_chart("comprehensive")>Comprehensive Analysis</button>
+</div>
+<p align = "center" id = "Analysis">泰坦尼克号是一艘奥林匹克级邮轮，于1912年4月首航时撞上冰山后沉没。死亡人数超越1500人，堪称20世纪最大的海难事件。影响乘客生还的因素有哪些？这些因素说明了什么？让我们一起来透过乘客的数据还原巨轮沉没时的情况。点击上方按钮，查看分析结果</p>
+
+<div id="chartContainer" align = 'center'>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="http://dimplejs.org/dist/dimple.v2.3.0.min.js"></script>
+  <script type="text/javascript">
+  
+  
+
+
+var svg = dimple.newSvg("#chartContainer", 590, 400) // initialize the svg
+
+    
+    function query(url){ // call api to fetch data
+      return fetch(url)}
+
+
+    function draw(data,param) {
+      switch(param)
+      {
+  
+        case "sex": // sex analysis, use sex as variables 
+          var sex_myChart = new dimple.chart(svg, data);
+          console.log(data);
+          sex_myChart.setBounds(60, 45, 510, 315)
+          var x = sex_myChart.addCategoryAxis("x", "Gender");
+          sex_myChart.addMeasureAxis("y","count");
+          sex_myChart.addSeries(["Survived"],dimple.plot.bar);
+          sex_myChart.addLegend(200, 10, 380, 20, "right");
+          sex_myChart.draw();
+          document.getElementById("Analysis").innerHTML="从图中可以看出虽然，男性总人数大于女性，可是女性生还率要远高于男性，可能是男士将求生机会优先让给了女士。";
+          break;
+          
+  
+        case "age": // age analysis, use age as variables 
+          var age_myChart = new dimple.chart(svg, data);
+          console.log(data)
+          age_myChart.setBounds(60, 45, 510, 315)
+          var x = age_myChart.addCategoryAxis("x", "Age Group");
+          x.addOrderRule(["0-16","16-25","25-40","40-60","60 and overs"]);
+          age_myChart.addMeasureAxis("y","count");
+          age_myChart.addSeries(["Survived"],dimple.plot.bar);
+          age_myChart.addLegend(200, 10, 380, 20, "right");
+          age_myChart.draw();
+          document.getElementById("Analysis").innerHTML="0-16岁的儿童乘客生还率最高，结合性别分析可见乘客遵循了儿童优先逃生的原则。";
+          break;
+
+  
+        case "pclass": // pclass analysis, use pclass as variables
+          var pclass_myChart = new dimple.chart(svg, data);
+          console.log(data)
+          pclass_myChart.setBounds(60, 45, 510, 315)
+          var x = pclass_myChart.addCategoryAxis("x", "Pclass");
+          x.addOrderRule(["Class1","Class2","Class3"]);
+          pclass_myChart.addMeasureAxis("y","count");
+          pclass_myChart.addSeries(["Survived"],dimple.plot.bar);
+          pclass_myChart.addLegend(200, 10, 380, 20, "right");
+          pclass_myChart.draw();
+          document.getElementById("Analysis").innerHTML="头等舱的乘客，生还率明显高于其他级别舱位的乘客，可能是头等舱的乘客有更多机会接触到救生舱。";
+          break;  
+
+  
+        case "comprehensive": // comprehensive analysis, use sex and pclass as variables
+          var pclass_myChart = new dimple.chart(svg, data);
+          console.log(data)
+          pclass_myChart.setBounds(60, 45, 510, 315)
+          var x = pclass_myChart.addCategoryAxis("x", ["Pclass","Gender"]);
+          x.addOrderRule(["Class1","Class2","Class3"]);
+          pclass_myChart.addMeasureAxis("y","count");
+          pclass_myChart.addSeries(["Survived"],dimple.plot.bar);
+          pclass_myChart.addLegend(200, 10, 380, 20, "right");
+          document.getElementById("Analysis").innerHTML="图中每组数据左侧是男性，右侧是女性，可以发现各个舱位的女性生还率都远高于男性。而处在头等舱的男性的生还率最高。印证了之前的观点。";
+          pclass_myChart.draw();
+          break;
+
+      }
+    };
+
+
+    function update_chart(param){ // update chart according to user's choice
+      svg.selectAll("*").remove()
+      query(param).then(function(data){data.json()
+      .then(function(data){draw(data,param)})})};
+
+
+  </script>
+  </body>
+</div>
+</html>
